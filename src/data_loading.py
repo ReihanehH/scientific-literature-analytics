@@ -78,7 +78,7 @@ def make_time_slices(
 
     slices: Dict[str, Dict[str, pd.DataFrame]] = {}
 
-    # +period in the stop so the last partial window (e.g. 2020-2023) is included
+
     for end in range(min_year + period - 1, max_year + period, period):
         start = end - period + 1
         actual_end = min(end, max_year)

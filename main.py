@@ -1,17 +1,3 @@
-# AMR Citation Network Analysis
-# Complex Networks — Final Project
-#
-# Run the full pipeline or individual steps:
-#
-#   python main.py --nodes data/AMR_nodes.csv --edges data/AMR_edges.csv
-#   python main.py --nodes data/AMR_nodes.csv --edges data/AMR_edges.csv --step communities
-#   python main.py --nodes data/AMR_nodes.csv --edges data/AMR_edges.csv --on-topic-only
-#   python main.py --nodes data/AMR_nodes.csv --edges data/AMR_edges.csv --method eigenvector
-#
-# Steps: build -> communities -> text -> temporal -> visualize
-# Each step caches its results so you can re-run individual steps without
-# repeating the expensive ones (e.g. community detection takes ~2 min).
-
 import argparse
 import logging
 import pickle
@@ -39,14 +25,14 @@ CACHE_DIR = Path("results/.cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# ----- pipeline steps -----
+# pipeline steps
 
 def step_build(args) -> dict:
     logger.info("=== STEP: build ===")
 
     nodes_df = data_loading.load_nodes(args.nodes, on_topic_only=args.on_topic_only)
-    edges_df = data_loading.load_edges(args.edges, valid_pmids=set(nodes_df.index))
-    logger.info(f"Nodes: {len(nodes_df):,} | Edges: {len(edges_df):,}")
+    edges_df = data_loading.load_edges(args.edges, valid_pmids=None)
+    logger.info(f"Nodes: {len(nodes_df):,} | Raw edges: {len(edges_df):,}")
 
     g_dir, pmid_to_vid = network_builder.build_igraph(nodes_df, edges_df, directed=True)
     g_und = network_builder.igraph_to_undirected(g_dir)
@@ -201,7 +187,7 @@ def step_visualize(args, state: dict = None) -> None:
     logger.info(f"All figures saved to {out_dir}/")
 
 
-# ----- orchestration -----
+# orchestration
 
 def run_pipeline(args) -> None:
     steps = {
@@ -229,7 +215,7 @@ def run_pipeline(args) -> None:
     logger.info("Done. Results saved to results/")
 
 
-# ----- CLI -----
+# CLI 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
@@ -262,7 +248,7 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-# ----- cache helpers -----
+# cache helpers
 
 def _save_cache(obj: dict, filename: str) -> None:
     with open(CACHE_DIR / filename, "wb") as f:

@@ -1,5 +1,5 @@
 # Community detection using igraph, as recommended by the professor.
-# Two methods are available:
+# Two methods:
 #   - multilevel  : Louvain algorithm, fast even on large graphs
 #   - eigenvector : leading eigenvector of the modularity matrix, slower but
 #                   sometimes gives better results on smaller graphs
@@ -40,8 +40,6 @@ def detect_communities(
     if method == "multilevel":
         partition = g.community_multilevel(weights=weights, return_levels=False)
     elif method == "eigenvector":
-        # This can be slow / memory-heavy on the full 235k-node graph;
-        # consider using multilevel for the full network
         partition = g.community_leading_eigenvector(weights=weights)
     else:
         raise ValueError(f"Unknown method '{method}'. Use 'multilevel' or 'eigenvector'.")

@@ -91,7 +91,7 @@ def fit_tfidf(
         ngram_range=ngram_range,
         min_df=min_df,
         stop_words=all_stopwords,
-        sublinear_tf=True,       # use log(1+tf) to reduce impact of very frequent terms
+        sublinear_tf=True,
         strip_accents="unicode",
         token_pattern=r"(?u)\b[a-zA-Z][a-zA-Z\-]{2,}\b",
     )
@@ -174,7 +174,7 @@ def print_top_terms(top_terms_df: pd.DataFrame, n_communities: int = 10) -> None
         print(f"  Community {cid:>4}: {terms}")
 
 
-# --- helpers ---
+# helpers
 
 def _clean_text(text: str) -> str:
     """Lowercase, remove punctuation, collapse whitespace."""

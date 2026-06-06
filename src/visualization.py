@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-matplotlib.use("Agg")  # no display needed when running as a script
+matplotlib.use("Agg")
 logger = logging.getLogger(__name__)
 
 

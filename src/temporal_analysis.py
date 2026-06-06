@@ -1,6 +1,6 @@
 # Temporal analysis of the AMR network.
 #
-# The approach follows the professor's suggestion:
+# The approach:
 #   1. Run community detection once on the full network (done in community_detection.py)
 #   2. Build subgraphs for each 5-year window
 #   3. Compute centrality measures (degree, betweenness, PageRank) per window

@@ -1,9 +1,7 @@
 # Build the citation graph using igraph (recommended by the professor for community detection)
-# and optionally NetworkX for algorithms not available in igraph.
-#
 # I build the igraph graph directly from the edge list instead of going through
 # NetworkX -> GraphML -> igraph, which is what the professor suggested but is slow
-# for a graph this size. Both routes are provided here.
+# for a graph this size.
 
 import logging
 from pathlib import Path
@@ -23,38 +21,60 @@ def build_igraph(
 ) -> Tuple[ig.Graph, Dict[int, int]]:
     """
     Build an igraph graph directly from the DataFrames.
+
+    All PMIDs that appear in the edge list but are not in nodes_df (i.e. papers
+    cited by our papers but not collected as nodes) are added as anonymous nodes
+    so that no edges are dropped. This is how we keep all 1,019,656 edges.
+
     Returns the graph and a PMID->vertex_id mapping (needed later to
     attach community labels back to the nodes DataFrame).
     """
     pmids = list(nodes_df.index)
     pmid_to_vid: Dict[int, int] = {pmid: i for i, pmid in enumerate(pmids)}
+    n_known = len(pmids)
+
+    # Find PMIDs referenced in edges but missing from nodes_df and add them
+    # as anonymous nodes (no metadata). This preserves all edges.
+    known_set = set(pmids)
+    extra_pmids = (
+        set(edges_df["citing"].tolist()) | set(edges_df["cited"].tolist())
+    ) - known_set
+    for pmid in extra_pmids:
+        pmid_to_vid[pmid] = len(pmids)
+        pmids.append(pmid)
+
     n_nodes = len(pmids)
+    if extra_pmids:
+        logger.info(f"  Added {len(extra_pmids):,} anonymous nodes for unlisted cited papers")
 
-    logger.info(f"Building igraph: {n_nodes:,} nodes ...")
+    logger.info(f"Building igraph: {n_nodes:,} nodes ({n_known:,} with metadata) ...")
 
-    # Map PMIDs to vertex indices using pandas (much faster than a Python loop)
-    citing_vid = edges_df["citing"].map(pmid_to_vid)
-    cited_vid  = edges_df["cited"].map(pmid_to_vid)
-    valid      = citing_vid.notna() & cited_vid.notna()
-
-    n_dropped = (~valid).sum()
-    if n_dropped:
-        logger.debug(f"  Dropped {n_dropped:,} edges pointing to unknown PMIDs")
-
-    edge_list = list(zip(
-        citing_vid[valid].astype(int).tolist(),
-        cited_vid[valid].astype(int).tolist(),
-    ))
+    # Map all edges — no edges dropped now
+    citing_vid = edges_df["citing"].map(pmid_to_vid).astype(int)
+    cited_vid  = edges_df["cited"].map(pmid_to_vid).astype(int)
+    edge_list  = list(zip(citing_vid.tolist(), cited_vid.tolist()))
 
     logger.info(f"  Adding {len(edge_list):,} edges ...")
     g = ig.Graph(n=n_nodes, edges=edge_list, directed=directed)
 
-    # Attach the attributes we'll need later
+    # Attach metadata for the known nodes; anonymous nodes get empty/default values
     g.vs["pmid"]     = pmids
-    g.vs["title"]    = nodes_df["Article"].fillna("").tolist()
-    g.vs["year"]     = [int(y) if pd.notna(y) else -1 for y in nodes_df["Year"]]
-    g.vs["on_topic"] = nodes_df["on_topic"].tolist()
-    g.vs["journal"]  = nodes_df["JournalTitle"].fillna("").tolist()
+    g.vs["title"]    = (
+        nodes_df["Article"].fillna("").tolist()
+        + [""] * len(extra_pmids)
+    )
+    g.vs["year"]     = (
+        [int(y) if pd.notna(y) else -1 for y in nodes_df["Year"]]
+        + [-1] * len(extra_pmids)
+    )
+    g.vs["on_topic"] = (
+        nodes_df["on_topic"].tolist()
+        + [False] * len(extra_pmids)
+    )
+    g.vs["journal"]  = (
+        nodes_df["JournalTitle"].fillna("").tolist()
+        + [""] * len(extra_pmids)
+    )
 
     logger.info(
         f"  igraph built: {g.vcount():,} nodes, {g.ecount():,} edges "
@@ -73,7 +93,7 @@ def igraph_to_undirected(g: ig.Graph, combine_edges: str = "ignore") -> ig.Graph
     return ug
 
 
-# --- NetworkX / GraphML route (alternative, as the professor suggested) ---
+# NetworkX / GraphML route
 
 def build_networkx(nodes_df: pd.DataFrame, edges_df: pd.DataFrame) -> nx.DiGraph:
     """Build a NetworkX directed graph from the same DataFrames."""
@@ -115,7 +135,7 @@ def load_igraph_from_graphml(path: str) -> ig.Graph:
     return g
 
 
-# --- utilities ---
+# utilities
 
 def largest_connected_component(g: ig.Graph) -> ig.Graph:
     """Return the subgraph of the largest weakly connected component."""
