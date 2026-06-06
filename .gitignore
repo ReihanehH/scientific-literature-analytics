@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.env
+.venv
+env/
+venv/
+
+# Data files (large – do not commit)
+data/*.csv
+data/*.tsv
+data/*.graphml
+data/*.gz
+
+# Results (generated – optionally commit figures)
+results/communities/
+results/temporal/
+*.pkl
+*.pickle
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/settings.json
