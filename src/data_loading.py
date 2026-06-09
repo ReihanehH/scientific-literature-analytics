@@ -106,7 +106,7 @@ def make_time_slices(
     return slices
 
 
-# --- helpers ---
+# helpers
 
 def _safe_parse_list(val) -> list:
     """Parse a Python list that was stored as a string. Return [] on failure."""

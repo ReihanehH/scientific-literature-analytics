@@ -253,6 +253,34 @@ def plot_community_growth(
     logger.info(f"Saved community_growth.png -> {out_dir}/")
 
 
+def plot_degree_distribution(
+    g: ig.Graph,
+    out_dir: str = "results/figures",
+) -> None:
+    """Log-log in-degree distribution plot."""
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+
+    indeg = np.array(g.indegree())
+    counts = np.bincount(indeg)
+    ks = np.where(counts > 0)[0]
+    ps = counts[ks] / counts[ks].sum()
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.scatter(ks, ps, s=6, alpha=0.6, color="#4e79a7")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("In-degree $k$")
+    ax.set_ylabel("$P(k)$")
+    ax.set_title("In-degree Distribution (log–log scale)")
+    ax.grid(linestyle="--", alpha=0.3)
+    sns.despine()
+
+    fig.tight_layout()
+    fig.savefig(f"{out_dir}/degree_distribution.png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    logger.info(f"Saved degree_distribution.png -> {out_dir}/")
+
+
 def plot_wordclouds(
     corpus: Dict[int, str],
     stats_df: pd.DataFrame,
