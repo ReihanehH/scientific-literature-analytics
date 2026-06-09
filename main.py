@@ -163,6 +163,10 @@ def step_visualize(args, state: dict = None) -> None:
     evolution_df = state.get("evolution_df")
     growth_df    = state.get("growth_df")
 
+    g_dir = state.get("g_dir")
+    if g_dir is not None:
+        visualization.plot_degree_distribution(g_dir, out_dir=out_dir)
+
     if partition is not None and g_und is not None:
         logger.info("Plotting network layout (DRL, sampled) ...")
         visualization.plot_network_layout(
